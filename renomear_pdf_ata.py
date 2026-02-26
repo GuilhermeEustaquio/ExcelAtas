@@ -36,22 +36,37 @@ def norm(s: str) -> str:
 
 
 RE_ATA_NUM = re.compile(r"\bn[ºo]\s*([0-9]{1,6}/[0-9]{4})\b", re.IGNORECASE)
+RE_UG = re.compile(r"\bUnidade\s+Gerenciadora\s+([0-9]{6})\b", re.IGNORECASE)
 
 
-def extrair_numero_ata(pdf_path: Path) -> Optional[str]:
+def extrair_numero_ata_e_ug(pdf_path: Path) -> tuple[Optional[str], Optional[str]]:
+    numero_ata: Optional[str] = None
+    ug: Optional[str] = None
+
     for page_text in extract_pages_text(pdf_path):
         texto = norm(page_text)
         if not texto:
             continue
-        match = RE_ATA_NUM.search(texto)
-        if match:
-            return match.group(1)
-    return None
+
+        if numero_ata is None:
+            match_ata = RE_ATA_NUM.search(texto)
+            if match_ata:
+                numero_ata = match_ata.group(1)
+
+        if ug is None:
+            match_ug = RE_UG.search(texto)
+            if match_ug:
+                ug = match_ug.group(1)
+
+        if numero_ata and ug:
+            return numero_ata, ug
+
+    return numero_ata, ug
 
 
-def nome_ata(numero_ata: str) -> str:
+def nome_ata(numero_ata: str, ug: str) -> str:
     numero_sanitizado = numero_ata.replace("/", "-")
-    return f"ATA_{numero_sanitizado}.pdf"
+    return f"ATA_{numero_sanitizado}_UG-{ug}.pdf"
 
 
 def proximo_nome_disponivel(destino: Path) -> Path:
@@ -76,11 +91,13 @@ def renomear_pdf(pdf_path: Path, dry_run: bool = False) -> Path:
     if pdf_path.suffix.lower() != ".pdf":
         raise ValueError("O arquivo informado não é um PDF.")
 
-    numero_ata = extrair_numero_ata(pdf_path)
+    numero_ata, ug = extrair_numero_ata_e_ug(pdf_path)
     if not numero_ata:
         raise RuntimeError("Não foi possível encontrar o número da ata no PDF.")
+    if not ug:
+        raise RuntimeError("Não foi possível encontrar a Unidade Gerenciadora (UG) no PDF.")
 
-    destino = proximo_nome_disponivel(pdf_path.with_name(nome_ata(numero_ata)))
+    destino = proximo_nome_disponivel(pdf_path.with_name(nome_ata(numero_ata, ug)))
 
     if not dry_run:
         pdf_path.rename(destino)
@@ -88,41 +105,58 @@ def renomear_pdf(pdf_path: Path, dry_run: bool = False) -> Path:
     return destino
 
 
+def renomear_todos_pdfs_da_pasta(pasta: Path, dry_run: bool = False) -> int:
+    if not pasta.exists() or not pasta.is_dir():
+        raise NotADirectoryError(f"Pasta inválida: {pasta}")
+
+    pdfs = sorted(pasta.glob("*.pdf"))
+    if not pdfs:
+        print(f"Nenhum PDF encontrado em: {pasta}")
+        return 0
+
+    sucesso = 0
+    for pdf in pdfs:
+        try:
+            destino = renomear_pdf(pdf, dry_run=dry_run)
+            acao = "Novo nome sugerido" if dry_run else "Arquivo renomeado para"
+            print(f"[{pdf.name}] {acao}: {destino.name}")
+            sucesso += 1
+        except Exception as exc:  # noqa: BLE001
+            print(f"[{pdf.name}] ERRO: {exc}")
+
+    return sucesso
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Renomeia PDFs com base no número da ata encontrado no conteúdo."
+        description="Renomeia um ou todos os PDFs com base no número da ata e UG encontrados no conteúdo."
     )
-
     parser.add_argument(
-        "--pasta",
+        "alvo",
         type=Path,
-        required=True,
-        help="Pasta contendo os PDFs para renomear",
+        nargs="?",
+        default=Path("."),
+        help="Arquivo PDF ou pasta com PDFs (padrão: pasta atual)",
     )
-
     parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="Mostra o novo nome sem renomear os arquivos.",
+        help="Mostra o novo nome sem renomear o arquivo.",
     )
-
     args = parser.parse_args()
 
-    if not args.pasta.exists():
-        raise SystemExit("Pasta não encontrada.")
+    try:
+        if args.alvo.is_dir():
+            total = renomear_todos_pdfs_da_pasta(args.alvo, dry_run=args.dry_run)
+            print(f"Processamento concluído. PDFs processados com sucesso: {total}")
+            return
 
-    pdfs = list(args.pasta.glob("*.pdf"))
+        novo_caminho = renomear_pdf(args.alvo, dry_run=args.dry_run)
+        acao = "Novo nome sugerido" if args.dry_run else "Arquivo renomeado para"
+        print(f"{acao}: {novo_caminho}")
+    except Exception as exc:  # noqa: BLE001
+        raise SystemExit(str(exc)) from exc
 
-    if not pdfs:
-        print("Nenhum PDF encontrado na pasta.")
-        return
 
-    for pdf in pdfs:
-        try:
-            novo_caminho = renomear_pdf(pdf, dry_run=args.dry_run)
-            acao = "Novo nome sugerido" if args.dry_run else "Arquivo renomeado para"
-            print(f"{acao}: {novo_caminho.name}")
-        except Exception as exc:
-            print(f"Erro em {pdf.name}: {exc}")
 if __name__ == "__main__":
     main()
