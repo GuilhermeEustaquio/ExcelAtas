@@ -64,7 +64,7 @@ def fmt_int_or_float(v: Optional[float]) -> str:
     return out
 
 
-# ========= NOVO: descrição robusta (não depende de RE_DESC) =========
+# ========= descrição robusta =========
 def extract_descricao(block: str) -> str:
     """
     Preferência: pega o TÍTULO do item (logo abaixo de 'DETALHAMENTO DO ITEM 000xx'),
@@ -75,12 +75,10 @@ def extract_descricao(block: str) -> str:
     b = re.sub(r"[ \t]+", " ", b)
 
     # ---------- 1) TÍTULO (curto) ----------
-    # Pega as linhas logo após 'DETALHAMENTO DO ITEM 00063' até encontrar 'Descrição' ou outro campo
     m_item = re.search(r"DETALHAMENTO DO ITEM\s+\d+\s*\n", b, flags=re.IGNORECASE)
     if m_item:
         tail = b[m_item.end():]
 
-        # para no primeiro marcador conhecido
         m_stop = re.search(
             r"(?im)^\s*(Descri[cç][aã]o|C[oó]digo do|Tipo do item|Quantidade homologada|Vig[êe]ncia inicial|FORNECEDOR\(ES\)|UNIDADE\(S\))",
             tail,
@@ -88,12 +86,10 @@ def extract_descricao(block: str) -> str:
         title_part = tail[: m_stop.start()] if m_stop else tail[:300]
         title_part = re.sub(r"\s+", " ", title_part).strip()
 
-        # se ficou algo útil, retorna
         if title_part and len(title_part) > 10:
             return title_part
 
     # ---------- 2) FALLBACK: DESCRIÇÃO DETALHADA ----------
-    # início: "Descrição" pode estar separado de "detalhada:"
     m_desc = re.search(r"(?im)^\s*Descri[cç][aã]o\b", b)
     if not m_desc:
         return ""
@@ -101,10 +97,8 @@ def extract_descricao(block: str) -> str:
     start = m_desc.end()
     tail = b[start:]
 
-    # remove o rótulo "detalhada:" se estiver no meio
     tail = re.sub(r"(?i)\bdetalhada\s*:\s*", " ", tail)
 
-    # fim: tenta vários marcadores (porque às vezes 'Código do item:' vem quebrado ou sem :)
     m_end = re.search(
         r"(?im)^\s*(C[oó]digo\s+do\s*[\n ]*item\s*:?"
         r"|Tipo\s+do\s+item\s*:?"
@@ -124,6 +118,7 @@ def extract_descricao(block: str) -> str:
 @dataclass
 class AtaMeta:
     numero_ata: str = ""
+    empresa: str = ""  # ✅ NOVO: CNPJ + Nome
     vigencia: str = ""
     unidade_gerenciadora: str = ""
 
@@ -135,6 +130,12 @@ RE_VIG = re.compile(
     re.IGNORECASE | re.DOTALL,
 )
 
+# ✅ NOVO: fornecedor no cabeçalho da ata (CNPJ - Razão Social)
+RE_FORNECEDOR = re.compile(
+    r"Fornecedor\s*\n\s*([0-9]{2}\.[0-9]{3}\.[0-9]{3}/[0-9]{4}-[0-9]{2}\s*-\s*[^\n]+)",
+    re.IGNORECASE,
+)
+
 RE_ITEM_START = re.compile(r"DETALHAMENTO\s+DO\s+ITEM\s+([0-9]{1,5})", re.IGNORECASE)
 
 # CRO/2 linha (sempre está no quadro UNIDADE(S))
@@ -144,7 +145,6 @@ RE_CRO2 = re.compile(
 )
 
 # Pega a linha do fornecedor e captura o ÚLTIMO número como valor unitário
-# Ex.: "001 43.471... GCM ... 7.618,0000 9.8900" -> pega 9.8900
 RE_SUPPLIER_LINE = re.compile(
     r"^\s*\d{3}\s+\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2}\s+.*?\s+([0-9][0-9.,]+)\s*$",
     re.IGNORECASE | re.MULTILINE,
@@ -155,6 +155,7 @@ RE_SUPPLIER_LINE = re.compile(
 def extract_meta_from_page(text: str) -> AtaMeta:
     ug = ""
     ata = ""
+    emp = ""
     vig = ""
 
     m = RE_UG.search(text)
@@ -165,11 +166,15 @@ def extract_meta_from_page(text: str) -> AtaMeta:
     if m:
         ata = norm(m.group(1))
 
+    m = RE_FORNECEDOR.search(text)
+    if m:
+        emp = norm(m.group(1))
+
     m = RE_VIG.search(text)
     if m:
         vig = f"{m.group(1)} a {m.group(2)}"
 
-    return AtaMeta(numero_ata=ata, vigencia=vig, unidade_gerenciadora=ug)
+    return AtaMeta(numero_ata=ata, empresa=emp, vigencia=vig, unidade_gerenciadora=ug)
 
 
 def is_ata_header_page(text: str) -> bool:
@@ -179,10 +184,6 @@ def is_ata_header_page(text: str) -> bool:
 
 # ==================== Blocos por Item (mantém páginas seguintes) ====================
 def iter_item_blocks(ata_pages: List[str]) -> Iterator[str]:
-    """
-    Junta as páginas da ata em uma string e divide por 'DETALHAMENTO DO ITEM xxxx'.
-    Isso garante que itens que continuam na página seguinte ainda sejam capturados.
-    """
     full = "\n\n".join(ata_pages)
     parts = re.split(r"(?=DETALHAMENTO DO ITEM\s+\d+)", full, flags=re.IGNORECASE)
     for p in parts:
@@ -197,7 +198,6 @@ def extract_item_data(block: str) -> Optional[Dict[str, Any]]:
         return None
     item = m_item.group(1).zfill(5)
 
-    # ✅ descrição (robusta)
     desc = extract_descricao(block)
 
     # valor unitário (pega linha do fornecedor, último número)
@@ -206,7 +206,7 @@ def extract_item_data(block: str) -> Optional[Dict[str, Any]]:
     if m_sup:
         valor_unit = parse_number_ptbr(m_sup.group(1))
 
-    # CRO/2 quantidades (registrada e disponível p/ remanejamento/empenho)
+    # CRO/2 quantidades
     m_cro = RE_CRO2.search(block)
     if not m_cro:
         return None
@@ -244,6 +244,7 @@ def process_pdf(pdf_path: Path) -> List[Dict[str, Any]]:
             rows.append(
                 {
                     "NumeroAta": meta.numero_ata,
+                    "Empresa": meta.empresa,  # ✅ NOVO
                     "Vigencia": meta.vigencia,
                     "UnidadeGerenciadora": meta.unidade_gerenciadora,
                     **item_data,
@@ -255,7 +256,6 @@ def process_pdf(pdf_path: Path) -> List[Dict[str, Any]]:
         if not page_text:
             continue
 
-        # nova ata detectada
         if is_ata_header_page(page_text):
             flush_current_ata()
             ata_pages = []
@@ -278,6 +278,7 @@ def save_xlsx(rows: List[Dict[str, Any]], out_path: Path) -> None:
 
     headers = [
         "NumeroAta",
+        "Empresa",  # ✅ NOVO: entre NumeroAta e Vigencia
         "Vigencia",
         "UnidadeGerenciadora",
         "Item",
@@ -285,29 +286,52 @@ def save_xlsx(rows: List[Dict[str, Any]], out_path: Path) -> None:
         "ValorUnitario",
         "QtdRegistrada",
         "QtdDisponivelRemanejamento",
+        "SaldoRemanejamento",
     ]
     ws.append(headers)
 
+    # escreve linhas + calcula saldo
     for r in rows:
-        ws.append([r.get(h, "") for h in headers])
+        vu = parse_number_ptbr(str(r.get("ValorUnitario", "") or "")) or 0.0
+        qd = parse_number_ptbr(str(r.get("QtdDisponivelRemanejamento", "") or "")) or 0.0
+        saldo = vu * qd
+        r["SaldoRemanejamento"] = saldo
 
-    # Ajustes básicos (opcional)
+        ws.append(
+            [
+                r.get("NumeroAta", ""),
+                r.get("Empresa", ""),
+                r.get("Vigencia", ""),
+                r.get("UnidadeGerenciadora", ""),
+                r.get("Item", ""),
+                r.get("DescricaoItem", ""),
+                r.get("ValorUnitario", ""),
+                r.get("QtdRegistrada", ""),
+                r.get("QtdDisponivelRemanejamento", ""),
+                round(saldo, 2),
+            ]
+        )
+
+    # Ajustes de alinhamento
     wrap = Alignment(wrap_text=True, vertical="center")
     center_v = Alignment(vertical="center")
 
-    # aplica wrap na descrição e centraliza verticalmente nos demais
     max_row = ws.max_row
     for row in range(2, max_row + 1):
-        ws.cell(row=row, column=5).alignment = wrap  # DescricaoItem (E)
-        for col in (1, 2, 3, 4, 6, 7, 8):  # demais colunas
+        ws.cell(row=row, column=6).alignment = wrap  # DescricaoItem (F)
+        for col in (1, 2, 3, 4, 5, 7, 8, 9, 10):
             ws.cell(row=row, column=col).alignment = center_v
 
-    # ✅ Mesclar A, B, C quando for a mesma ATA (blocos consecutivos)
+        # ✅ Moeda no saldo (coluna J)
+        ws.cell(row=row, column=10).number_format = 'R$ #,##0.00'
+
+    # ✅ Mesclar A, B, C, D quando for a mesma ATA (blocos consecutivos)
     def key_at(row_idx: int):
         return (
             ws.cell(row=row_idx, column=1).value,  # NumeroAta
-            ws.cell(row=row_idx, column=2).value,  # Vigencia
-            ws.cell(row=row_idx, column=3).value,  # UnidadeGerenciadora
+            ws.cell(row=row_idx, column=2).value,  # Empresa
+            ws.cell(row=row_idx, column=3).value,  # Vigencia
+            ws.cell(row=row_idx, column=4).value,  # UnidadeGerenciadora
         )
 
     start = 2
@@ -318,13 +342,8 @@ def save_xlsx(rows: List[Dict[str, Any]], out_path: Path) -> None:
             end += 1
 
         if end > start:
-            # mescla A, B, C
-            ws.merge_cells(start_row=start, start_column=1, end_row=end, end_column=1)
-            ws.merge_cells(start_row=start, start_column=2, end_row=end, end_column=2)
-            ws.merge_cells(start_row=start, start_column=3, end_row=end, end_column=3)
-
-            # centraliza verticalmente as células mescladas (usa a célula do topo)
-            for col in (1, 2, 3):
+            for col in (1, 2, 3, 4):
+                ws.merge_cells(start_row=start, start_column=col, end_row=end, end_column=col)
                 ws.cell(row=start, column=col).alignment = Alignment(
                     vertical="center", wrap_text=True
                 )
@@ -347,7 +366,7 @@ def main() -> None:
 
     rows = process_pdf(args.pdf)
     save_xlsx(rows, args.output)
-    print(f"✅ Concluído. Linhas: {len(rows)} | Saída: {args.output.resolve()}")
+    print(f"Concluído. Linhas: {len(rows)} | Saída: {args.output.resolve()}")
 
 
 if __name__ == "__main__":
