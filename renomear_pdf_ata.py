@@ -88,39 +88,11 @@ def renomear_pdf(pdf_path: Path, dry_run: bool = False) -> Path:
     return destino
 
 
-def renomear_todos_pdfs_da_pasta(pasta: Path, dry_run: bool = False) -> int:
-    if not pasta.exists() or not pasta.is_dir():
-        raise NotADirectoryError(f"Pasta inválida: {pasta}")
-
-    pdfs = sorted(pasta.glob("*.pdf"))
-    if not pdfs:
-        print(f"Nenhum PDF encontrado em: {pasta}")
-        return 0
-
-    sucesso = 0
-    for pdf in pdfs:
-        try:
-            destino = renomear_pdf(pdf, dry_run=dry_run)
-            acao = "Novo nome sugerido" if dry_run else "Arquivo renomeado para"
-            print(f"[{pdf.name}] {acao}: {destino.name}")
-            sucesso += 1
-        except Exception as exc:  # noqa: BLE001
-            print(f"[{pdf.name}] ERRO: {exc}")
-
-    return sucesso
-
-
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Renomeia um ou todos os PDFs com base no número da ata encontrado no conteúdo."
+        description="Renomeia um PDF com base no número da ata encontrado no conteúdo."
     )
-    parser.add_argument(
-        "alvo",
-        type=Path,
-        nargs="?",
-        default=Path("."),
-        help="Arquivo PDF ou pasta com PDFs (padrão: pasta atual)",
-    )
+    parser.add_argument("pdf", type=Path, help="PDF com nome aleatório")
     parser.add_argument(
         "--dry-run",
         action="store_true",
@@ -129,16 +101,12 @@ def main() -> None:
     args = parser.parse_args()
 
     try:
-        if args.alvo.is_dir():
-            total = renomear_todos_pdfs_da_pasta(args.alvo, dry_run=args.dry_run)
-            print(f"Processamento concluído. PDFs processados com sucesso: {total}")
-            return
-
-        novo_caminho = renomear_pdf(args.alvo, dry_run=args.dry_run)
-        acao = "Novo nome sugerido" if args.dry_run else "Arquivo renomeado para"
-        print(f"{acao}: {novo_caminho}")
+        novo_caminho = renomear_pdf(args.pdf, dry_run=args.dry_run)
     except Exception as exc:  # noqa: BLE001
         raise SystemExit(str(exc)) from exc
+
+    acao = "Novo nome sugerido" if args.dry_run else "Arquivo renomeado para"
+    print(f"{acao}: {novo_caminho}")
 
 
 if __name__ == "__main__":
