@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ExcelAtas - Painel</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">ExcelAtas</div>
+    <div class="subtitle">Painel de Processamento de Atas</div>
+  </header>
+
+  <main class="container">
+    <section class="card">
+      <h2>Módulo Processos</h2>
+      <p>Converta o PDF de atas em planilha XLSX com os itens da CRO/2.</p>
+      <form id="form-extrair" class="form-block">
+        <input type="file" name="pdf" accept="application/pdf" required />
+        <button type="submit">Gerar Relatório XLSX</button>
+      </form>
+      <div id="status-extrair" class="status"></div>
+    </section>
+
+    <section class="card">
+      <h2>Módulo Documentos</h2>
+      <p>Analise o PDF e obtenha o nome padronizado da ata.</p>
+      <form id="form-renomear" class="form-block">
+        <input type="file" name="pdf" accept="application/pdf" required />
+        <button type="submit">Sugerir Novo Nome</button>
+      </form>
+      <div id="status-renomear" class="status"></div>
+    </section>
+  </main>
+
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
