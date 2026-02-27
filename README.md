@@ -26,9 +26,9 @@ Abra no navegador: `http://localhost:5000`
 
 Somente esse usuário tem acesso ao botão **Cadastrar usuários** para criar novos logins.
 
-## Hospedagem gratuita da aplicação web (PythonAnywhere)
+## Hospedar a aplicação web na internet (Render)
 
-Se você precisa de **hospedagem gratuita**, use o **PythonAnywhere (plano Free)**.
+Este projeto já está preparado para deploy com **Gunicorn** usando os arquivos `Procfile` e `wsgi.py`.
 
 ### 1) Suba o projeto no GitHub
 
@@ -36,49 +36,26 @@ Se você precisa de **hospedagem gratuita**, use o **PythonAnywhere (plano Free)
 git push origin <sua-branch>
 ```
 
-### 2) Crie conta e abra um Bash no PythonAnywhere
+### 2) Crie um serviço Web no Render
 
-1. Acesse https://www.pythonanywhere.com/ e crie uma conta gratuita.
-2. No painel, abra um **Bash console**.
+1. Acesse https://render.com e clique em **New +** → **Web Service**.
+2. Conecte seu repositório.
+3. Configure:
+   - **Build Command:** `pip install -r requirements.txt`
+   - **Start Command:** `gunicorn wsgi:app`
 
-### 3) Clone o projeto e instale dependências
+### 3) Defina variáveis de ambiente
 
-```bash
-git clone <URL_DO_REPOSITORIO>
-cd ExcelAtas
-python3.10 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-```
+No painel do Render, em **Environment Variables**, configure:
 
-### 4) Criar Web App Flask (manual configuration)
+- `SECRET_KEY` = uma chave forte e única (obrigatório em produção)
+- `SESSION_COOKIE_SECURE` = `1`
 
-1. Vá em **Web** → **Add a new web app**.
-2. Escolha **Manual configuration** e a versão do Python.
-3. Em **WSGI configuration file**, aponte para o projeto adicionando:
+> O Render já injeta a variável `PORT` automaticamente.
 
-```python
-import sys
-path = '/home/SEU_USUARIO/ExcelAtas'
-if path not in sys.path:
-    sys.path.append(path)
+### 4) Deploy
 
-from aplicacao_web.web_app import app as application
-```
-
-### 5) Configure variáveis e recarregue
-
-No arquivo WSGI do PythonAnywhere, antes do import da aplicação, adicione:
-
-```python
-import os
-os.environ['SECRET_KEY'] = 'troque-por-uma-chave-forte'
-os.environ['SESSION_COOKIE_SECURE'] = '1'
-```
-
-Depois clique em **Reload** na aba Web.
-
-> Observação: no plano gratuito do PythonAnywhere pode haver limitações (domínio `*.pythonanywhere.com`, hibernação/recursos reduzidos), mas funciona sem custo.
+Clique em **Create Web Service**. Após finalizar o deploy, o Render vai disponibilizar uma URL pública `https://...onrender.com`.
 
 ## Aplicação Desktop (desenvolvimento)
 
