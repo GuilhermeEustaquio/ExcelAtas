@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import os
 import sqlite3
 import tempfile
 from pathlib import Path
@@ -18,7 +19,8 @@ DB_PATH = DB_DIR / "usuarios.db"
 
 app = Flask(__name__, template_folder="templates", static_folder="static")
 app.config["MAX_CONTENT_LENGTH"] = 20 * 1024 * 1024  # 20 MB
-app.config["SECRET_KEY"] = "excelatas-login-seguro"
+app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "dev-insecure-change-me")
+app.config["SESSION_COOKIE_SECURE"] = os.getenv("SESSION_COOKIE_SECURE", "0") == "1"
 
 
 ADMIN_USERNAME = "eustaquio"
@@ -235,4 +237,7 @@ with app.app_context():
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    host = os.getenv("HOST", "0.0.0.0")
+    port = int(os.getenv("PORT", "5000"))
+    debug = os.getenv("FLASK_DEBUG", "0") == "1"
+    app.run(host=host, port=port, debug=debug)
