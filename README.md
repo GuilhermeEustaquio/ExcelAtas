@@ -14,7 +14,7 @@ python -m pip install -r requirements.txt
 ## Aplicação Web
 
 ```bash
-python aplicacao_web/web_app.py
+py -m aplicacao_web.web_app
 ```
 
 Abra no navegador: `http://localhost:5000`
@@ -29,7 +29,7 @@ Somente esse usuário tem acesso ao botão **Cadastrar usuários** para criar no
 ## Aplicação Desktop (desenvolvimento)
 
 ```bash
-python programa_completo/desktop_app.py
+py -m programa_completo.desktop_app
 ```
 
 > Requer Tkinter disponível no Python da máquina.
