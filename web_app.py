@@ -14,19 +14,30 @@ app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = 20 * 1024 * 1024  # 20 MB
 
 
-def _validate_pdf_upload() -> tuple[Path, str]:
-    uploaded = request.files.get("pdf")
+def _save_uploaded_pdf(uploaded) -> tuple[Path, str]:
     if uploaded is None or uploaded.filename is None or uploaded.filename.strip() == "":
         raise ValueError("Selecione um arquivo PDF para continuar.")
 
     filename = secure_filename(uploaded.filename)
     if not filename.lower().endswith(".pdf"):
-        raise ValueError("Formato inválido. Envie um arquivo .pdf")
+        raise ValueError(f"Formato inválido em '{filename}'. Envie apenas arquivos .pdf")
 
     tmpdir = Path(tempfile.mkdtemp(prefix="excelatas_"))
     pdf_path = tmpdir / filename
     uploaded.save(pdf_path)
     return pdf_path, filename
+
+
+def _validate_pdf_upload() -> tuple[Path, str]:
+    return _save_uploaded_pdf(request.files.get("pdf"))
+
+
+def _validate_pdf_uploads() -> list[tuple[Path, str]]:
+    uploads = [f for f in request.files.getlist("pdf") if f and (f.filename or "").strip()]
+    if not uploads:
+        raise ValueError("Selecione ao menos um arquivo PDF para continuar.")
+
+    return [_save_uploaded_pdf(uploaded) for uploaded in uploads]
 
 
 @app.route("/")
@@ -55,18 +66,28 @@ def api_extrair():
 @app.route("/api/renomear", methods=["POST"])
 def api_renomear():
     try:
-        pdf_path, _ = _validate_pdf_upload()
-        numero_ata, ug = extrair_numero_ata_e_ug(pdf_path)
+        sugestoes = []
+        for pdf_path, original_name in _validate_pdf_uploads():
+            numero_ata, ug = extrair_numero_ata_e_ug(pdf_path)
 
-        if not numero_ata or not ug:
-            return jsonify({"erro": "Não foi possível identificar número da ata e UG no arquivo."}), 422
+            if not numero_ata or not ug:
+                sugestoes.append({
+                    "arquivo_original": original_name,
+                    "erro": "Não foi possível identificar número da ata e UG no arquivo.",
+                })
+                continue
 
-        novo_nome = nome_ata(numero_ata, ug)
-        return jsonify({
-            "numero_ata": numero_ata,
-            "ug": ug,
-            "novo_nome": novo_nome,
-        })
+            sugestoes.append({
+                "arquivo_original": original_name,
+                "numero_ata": numero_ata,
+                "ug": ug,
+                "novo_nome": nome_ata(numero_ata, ug),
+            })
+
+        if not sugestoes:
+            return jsonify({"erro": "Nenhum arquivo válido foi enviado."}), 422
+
+        return jsonify({"sugestoes": sugestoes})
     except Exception as exc:  # noqa: BLE001
         return jsonify({"erro": str(exc)}), 400
 

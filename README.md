@@ -8,7 +8,7 @@ Interface web e desktop para usar os dois programas Python do projeto:
 ## Requisitos
 
 ```bash
-python -m pip install flask openpyxl pdfplumber pypdf
+python -m pip install -r requirements.txt
 ```
 
 ## Aplicação Web
@@ -19,6 +19,12 @@ python web_app.py
 
 Abra no navegador: `http://localhost:5000`
 
+### Melhorias da UI
+
+- Botão de seleção de PDF com estilo personalizado.
+- Módulo **Documentos** aceitando múltiplos PDFs.
+- Lista de sugestões no formato: `arquivo_original.pdf → nome_sugerido.pdf`.
+
 ## Aplicação Desktop
 
 ```bash
@@ -26,6 +32,16 @@ python desktop_app.py
 ```
 
 > Requer Tkinter disponível no Python da máquina.
+
+## Gerar EXE para Windows (sem instalar dependências na máquina final)
+
+No Windows, execute:
+
+```bat
+build_windows_exe.bat
+```
+
+Isso gera `dist\ExcelAtas.exe` (arquivo único), que pode ser copiado para outra máquina Windows sem precisar instalar Python ou pacotes separadamente.
 
 ## Scripts Originais (CLI)
 
