@@ -20,7 +20,7 @@ if exist release rmdir /s /q release
 if exist ExcelAtas.spec del /q ExcelAtas.spec
 
 echo [3/4] Gerando EXE unico (sem depender de Python instalado)...
-py -m PyInstaller --noconfirm --clean --onefile --windowed --name ExcelAtas desktop_app.py
+py -m PyInstaller --noconfirm --clean --onefile --windowed --name ExcelAtas programa_completo\desktop_app.py
 if errorlevel 1 goto :error
 
 echo [4/4] Montando pacote portatil para distribuicao...

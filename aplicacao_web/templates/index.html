@@ -10,6 +10,16 @@
   <header class="topbar">
     <div class="brand">ExcelAtas</div>
     <div class="subtitle">Painel de Processamento de Atas</div>
+    <div class="user-bar">
+      <span>Usuário: <strong>{{ user['username'] }}</strong></span>
+      {% if user['is_admin'] %}
+        <span class="badge admin">Administrador</span>
+        <a class="text-link" href="{{ url_for('cadastrar_usuario') }}">Cadastrar usuários</a>
+      {% endif %}
+      <form method="post" action="{{ url_for('logout') }}">
+        <button type="submit" class="small-btn">Sair</button>
+      </form>
+    </div>
   </header>
 
   <main class="container">
