@@ -2,3 +2,4 @@ flask
 openpyxl
 pdfplumber
 pypdf
+gunicorn
