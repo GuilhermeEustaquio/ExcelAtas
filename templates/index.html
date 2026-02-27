@@ -17,7 +17,11 @@
       <h2>Módulo Processos</h2>
       <p>Converta o PDF de atas em planilha XLSX com os itens da CRO/2.</p>
       <form id="form-extrair" class="form-block">
-        <input type="file" name="pdf" accept="application/pdf" required />
+        <label class="file-upload">
+          <span class="file-upload-label">Selecionar PDF</span>
+          <span class="file-upload-name" data-default="Nenhum arquivo selecionado">Nenhum arquivo selecionado</span>
+          <input type="file" name="pdf" accept="application/pdf" required />
+        </label>
         <button type="submit">Gerar Relatório XLSX</button>
       </form>
       <div id="status-extrair" class="status"></div>
@@ -25,9 +29,13 @@
 
     <section class="card">
       <h2>Módulo Documentos</h2>
-      <p>Analise o PDF e obtenha o nome padronizado da ata.</p>
+      <p>Analise um ou mais PDFs e obtenha os nomes padronizados das atas.</p>
       <form id="form-renomear" class="form-block">
-        <input type="file" name="pdf" accept="application/pdf" required />
+        <label class="file-upload">
+          <span class="file-upload-label">Selecionar PDFs</span>
+          <span class="file-upload-name" data-default="Nenhum arquivo selecionado">Nenhum arquivo selecionado</span>
+          <input type="file" name="pdf" accept="application/pdf" multiple required />
+        </label>
         <button type="submit">Sugerir Novo Nome</button>
       </form>
       <div id="status-renomear" class="status"></div>
