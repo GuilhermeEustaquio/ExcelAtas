@@ -26,36 +26,26 @@ Abra no navegador: `http://localhost:5000`
 
 Somente esse usuário tem acesso ao botão **Cadastrar usuários** para criar novos logins.
 
-## Hospedar a aplicação web na internet (Render)
+## Hospedar a aplicação web na internet (opção gratuita recomendada)
 
-Este projeto já está preparado para deploy com **Gunicorn** usando os arquivos `Procfile` e `wsgi.py`.
+A melhor opção gratuita para este projeto Flask atualmente é o **PythonAnywhere**.
 
-### 1) Suba o projeto no GitHub
+- Mantém suporte direto a Flask no plano gratuito.
+- Não depende de free tier temporário.
+- Funciona bem com o banco SQLite já usado no projeto.
 
-```bash
-git push origin <sua-branch>
-```
+### Deploy recomendado
 
-### 2) Crie um serviço Web no Render
+Siga o guia completo em [`DEPLOY_PYTHONANYWHERE.md`](DEPLOY_PYTHONANYWHERE.md).
 
-1. Acesse https://render.com e clique em **New +** → **Web Service**.
-2. Conecte seu repositório.
-3. Configure:
-   - **Build Command:** `pip install -r requirements.txt`
-   - **Start Command:** `gunicorn wsgi:app`
+Resumo rápido:
 
-### 3) Defina variáveis de ambiente
-
-No painel do Render, em **Environment Variables**, configure:
-
-- `SECRET_KEY` = uma chave forte e única (obrigatório em produção)
-- `SESSION_COOKIE_SECURE` = `1`
-
-> O Render já injeta a variável `PORT` automaticamente.
-
-### 4) Deploy
-
-Clique em **Create Web Service**. Após finalizar o deploy, o Render vai disponibilizar uma URL pública `https://...onrender.com`.
+1. Criar conta no PythonAnywhere.
+2. Clonar o repositório no console.
+3. Criar virtualenv e instalar `requirements.txt`.
+4. Configurar o arquivo WSGI para apontar para `aplicacao_web.web_app`.
+5. Definir `SECRET_KEY` e `SESSION_COOKIE_SECURE`.
+6. Recarregar a aplicação e acessar a URL `*.pythonanywhere.com`.
 
 ## Aplicação Desktop (desenvolvimento)
 
