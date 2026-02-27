@@ -9,8 +9,8 @@ if errorlevel 1 (
 )
 
 echo [1/4] Instalando dependencias de build...
-python -m pip install --upgrade pip
-python -m pip install -r requirements.txt pyinstaller
+py -m pip install --upgrade pip
+py -m pip install -r requirements.txt pyinstaller
 if errorlevel 1 goto :error
 
 echo [2/4] Limpando builds anteriores...
@@ -20,7 +20,7 @@ if exist release rmdir /s /q release
 if exist ExcelAtas.spec del /q ExcelAtas.spec
 
 echo [3/4] Gerando EXE unico (sem depender de Python instalado)...
-python -m PyInstaller --noconfirm --clean --onefile --windowed --name ExcelAtas desktop_app.py
+py -m PyInstaller --noconfirm --clean --onefile --windowed --name ExcelAtas desktop_app.py
 if errorlevel 1 goto :error
 
 echo [4/4] Montando pacote portatil para distribuicao...
