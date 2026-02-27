@@ -5,7 +5,7 @@ Interface web e desktop para usar os dois programas Python do projeto:
 - Extração de itens da CRO/2 de PDF para XLSX.
 - Renomeação padronizada de PDFs de atas.
 
-## Requisitos
+## Requisitos (apenas para desenvolvimento)
 
 ```bash
 python -m pip install -r requirements.txt
@@ -25,7 +25,7 @@ Abra no navegador: `http://localhost:5000`
 - Módulo **Documentos** aceitando múltiplos PDFs.
 - Lista de sugestões no formato: `arquivo_original.pdf → nome_sugerido.pdf`.
 
-## Aplicação Desktop
+## Aplicação Desktop (desenvolvimento)
 
 ```bash
 python desktop_app.py
@@ -33,15 +33,23 @@ python desktop_app.py
 
 > Requer Tkinter disponível no Python da máquina.
 
-## Gerar EXE para Windows (sem instalar dependências na máquina final)
+## Entrega para usuários finais no Windows (sem instalar Python)
 
-No Windows, execute:
+Se a ideia é entregar para qualquer pessoa abrir e usar sem conhecimento técnico, use o empacotamento abaixo em **uma máquina de build** (somente quem gera o executável precisa de Python):
 
 ```bat
 build_windows_exe.bat
 ```
 
-Isso gera `dist\ExcelAtas.exe` (arquivo único), que pode ser copiado para outra máquina Windows sem precisar instalar Python ou pacotes separadamente.
+Saídas:
+
+- `dist\ExcelAtas.exe` → executável único.
+- `release\ExcelAtas-Windows-Portable\` → pasta pronta para distribuir, contendo:
+  - `ExcelAtas.exe`
+  - `INICIAR_EXCELATAS.bat` (duplo clique para abrir)
+  - `LEIA-ME.txt`
+
+Na máquina final do usuário, basta extrair a pasta e executar `INICIAR_EXCELATAS.bat`.
 
 ## Scripts Originais (CLI)
 
