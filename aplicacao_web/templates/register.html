@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ExcelAtas - Cadastrar Usuário</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">ExcelAtas</div>
+    <div class="subtitle">Cadastro de Usuários (Administrador)</div>
+  </header>
+
+  <main class="container single-column">
+    <section class="card">
+      <h2>Cadastrar novo usuário</h2>
+      <p>Somente o administrador pode criar novos acessos.</p>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="status {{ 'err' if category == 'error' else 'ok' }}">{{ message }}</div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      <form method="post" class="form-block">
+        <input type="text" name="username" placeholder="Novo usuário" required />
+        <input type="password" name="password" placeholder="Senha" required />
+        <button type="submit">Cadastrar usuário</button>
+      </form>
+
+      <a class="text-link" href="{{ url_for('index') }}">Voltar ao painel</a>
+    </section>
+  </main>
+</body>
+</html>

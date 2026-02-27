@@ -34,6 +34,14 @@ body {
   opacity: 0.9;
 }
 
+.user-bar {
+  margin-top: 0.65rem;
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
 .container {
   max-width: 1000px;
   margin: 2rem auto;
@@ -41,6 +49,11 @@ body {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 1.2rem;
+}
+
+.single-column {
+  max-width: 640px;
+  grid-template-columns: 1fr;
 }
 
 .card {
@@ -80,6 +93,14 @@ body {
   display: none;
 }
 
+input[type="text"],
+input[type="password"] {
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  padding: 0.65rem;
+  font-size: 0.95rem;
+}
+
 .file-upload-label {
   display: inline-flex;
   align-items: center;
@@ -116,6 +137,11 @@ button {
   transition: transform 0.12s ease, opacity 0.12s ease;
 }
 
+.small-btn {
+  padding: 0.4rem 0.7rem;
+  font-size: 0.85rem;
+}
+
 button:hover {
   transform: translateY(-1px);
   opacity: 0.95;
@@ -143,6 +169,12 @@ button:active { transform: translateY(0); }
   font-size: 0.8rem;
 }
 
+.badge.admin {
+  margin: 0;
+  background: #fff3cd;
+  color: #8a6d1e;
+}
+
 .rename-list {
   margin: 0.7rem 0 0;
   padding-left: 1rem;
@@ -157,4 +189,32 @@ button:active { transform: translateY(0); }
   color: #0f766e;
   font-weight: 700;
   margin: 0 0.25rem;
+}
+
+.auth-page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+}
+
+.auth-card {
+  width: min(420px, 96vw);
+  background: #fff;
+  padding: 1.4rem;
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  border-top: 6px solid var(--primary);
+}
+
+.auth-card h1 {
+  margin-top: 0;
+  margin-bottom: 0.25rem;
+  color: var(--primary);
+}
+
+.text-link {
+  color: #0f766e;
+  font-weight: 700;
+  text-decoration: none;
 }

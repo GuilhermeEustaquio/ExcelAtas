@@ -5,8 +5,8 @@ import tkinter as tk
 from pathlib import Path
 from tkinter import filedialog, messagebox, ttk
 
-from main import process_pdf, save_xlsx
-from renomear_pdf_ata import extrair_numero_ata_e_ug, nome_ata, renomear_pdf
+from programa_completo.main import process_pdf, save_xlsx
+from programa_completo.renomear_pdf_ata import extrair_numero_ata_e_ug, nome_ata, renomear_pdf
 
 BG = "#f3f5f7"
 PRIMARY = "#00796b"
